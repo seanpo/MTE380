@@ -1,41 +1,167 @@
+                                                                                                                                                                                                                                                                                                              #include <Ultrasonic.h>
 #include <VirtualWire.h>
-#include <Ultrasonic.h>
 
-Ultrasonic Front_Ultrasonic(22,23);
-Ultrasonic Left_Ultrasonic(24,25);
-Ultrasonic Right_Ultrasonic(26,27);
-Ultrasonic Back_Ultrasonic(28,29);
+int left_in2 = 8;
+int left_in3 = 9;
+
+int right_in2 = 10;
+int right_in3 = 11;
+
+Ultrasonic Front_Ultrasonic(6, 7);
+Ultrasonic Right_Ultrasonic(4,5);
+Ultrasonic Back_Ultrasonic(2,3);
 
 int Front_Distance;
 int Left_Distance;
 int Right_Distance;
 int Back_Distance;
 char *controller;
+int once = 0;
 void setup() {
-  pinMode(13,OUTPUT);
+  //pinMode(LED_PIN, OUTPUT);
+  Serial.begin(115200);
   vw_set_ptt_inverted(true); //
-  vw_set_tx_pin(12);
   vw_setup(4000);// speed of data transfer Kbps
-  Serial.begin(9600);
+  vw_set_tx_pin(12);
+  pinMode(right_in2, OUTPUT);
+  pinMode(right_in3, OUTPUT);
+  pinMode(left_in2, OUTPUT);
+  pinMode(left_in3, OUTPUT);
 }
 
 void loop()
 {
- findplatform();
- //turn90();
- findlegomanandstop();
- //pickup();
- sendreversesignal();
+  drive_forward(255);
+  sendforwardsignal();
+  //findplatform();
+//  delay(10000);
+}
+
+void go_up_ramp()
+{
+ drive_forward(255);
+ delay(5000);  
+ drive_stop(255);
 }
 
 void findplatform(){
-   Right_Distance=Right_Ultrasonic.Ranging(CM);
-   while(Right_Distance>200){
-        sendforwardsignal();
-        Right_Distance=Right_Ultrasonic.Ranging(CM);
-        delay(300);
-   }
+ 
+ /* while (Back_Ultrasonic.Ranging(CM) > 3)
+  {
+    drive_reverse(255);
+  } 
+  */
+  drive_stop(255);
+  
+  while (Front_Ultrasonic.Ranging(CM) > 3){
+    drive_forward(155);
+    delay(750);
+    Right_Distance=Right_Ultrasonic.Ranging(CM);
+    if (Right_Distance < 100)
+      break;
+    }
 }
+
+
+void drive_reverse(int s) {
+  digitalWrite(left_in3, LOW);
+  digitalWrite(right_in3, HIGH);
+  int i;
+  for (i = 0; i <s; i++)
+  {
+    analogWrite(right_in2, i);
+    analogWrite(left_in2, i);
+  }
+  
+}
+
+void drive_forward(int s) {
+  digitalWrite(left_in3, HIGH);
+  digitalWrite(right_in3, LOW);
+  int i;
+  for (i = 0; i <s; i++)
+  {
+    analogWrite(right_in2, i);
+    analogWrite(left_in2, i);  
+  }  
+}
+
+void drive_stop(int s) {
+  digitalWrite(left_in3, LOW);
+  digitalWrite(right_in3, LOW);
+  int i;
+  for (i = s; i>=0; i--)
+  {
+    analogWrite(right_in2, i);
+    analogWrite(left_in2, i);
+  }  
+}
+
+void drive_right(int time)
+{
+  digitalWrite(left_in3, LOW);
+  digitalWrite(right_in3, HIGH);
+  int i;
+  for (i = 0; i<255; i++)
+  {
+    analogWrite(right_in2, i);
+    analogWrite(left_in2, i);
+  }
+  delay(time);
+}
+
+void drive_left(int time)
+{
+  
+  digitalWrite(left_in3, HIGH);
+  digitalWrite(right_in3, LOW);
+  int i;
+  for (i = 0; i<255; i++)
+  {
+    analogWrite(right_in2, i);
+    analogWrite(left_in2, i);
+  }
+  delay(time);
+}
+
+void sendforwardsignal(){
+   controller="2";
+   vw_send((uint8_t *)controller, strlen(controller));
+   vw_wait_tx(); // Wait until the whole message is gone
+   digitalWrite(13,1);
+   delay(300); 
+}
+
+void sendreversesignal(){
+   controller="1";
+   vw_send((uint8_t *)controller, strlen(controller));
+   vw_wait_tx(); // Wait until the whole message is gone
+   digitalWrite(13,1);
+   delay(300); 
+}
+
+void sendstopsignal(){
+   controller="3";
+   vw_send((uint8_t *)controller, strlen(controller));
+   vw_wait_tx(); // Wait until the whole message is gone
+   digitalWrite(13,1);
+   delay(300); 
+}
+
+/*
+void go_to_start()
+{
+  int distance_to_back; //set distance needing to reverse
+  while (Back_Ultrasonic.Ranging(CM)!=distance_to_back)
+  {
+    if (Back_Ultrasonic.Ranging(CM) > distance_to_back)
+     
+  }
+ 
+}
+ 
+  */
+/*
 
 void findlegomanandstop(){
   Front_Distance=Front_Ultrasonic.Ranging(CM);
@@ -55,10 +181,6 @@ sendforwardsignal(){
    delay(300); 
 }
 
-sendreversesignal(){
-   controller="2";
-   vw_send((uint8_t *)controller, strlen(controller));
-   vw_wait_tx(); // Wait until the whole message is gone
-   digitalWrite(13,1);
-   delay(300); 
-}
+
+*/
+

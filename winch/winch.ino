@@ -45,6 +45,10 @@ void loop()
 {   
   if (vw_get_message(buf, &buflen)) // Non-blocking
   {
+    if (true) {
+      Serial.println(buf[0]);
+    }
+    Serial.println("waiting");
     if(buf[0]=='1')
     {
       drive_forward();
